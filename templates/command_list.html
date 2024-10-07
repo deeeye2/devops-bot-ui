@@ -1,0 +1,169 @@
+<form method="POST" action="{{ url_for('change_password') }}">
+    <div class="form-group">
+        <label for="current_password">Current Password</label>
+        <input type="password" class="form-control" id="current_password" name="current_password" required>
+    </div>
+    <div class="form-group">
+        <label for="new_password">New Password</label>
+        <input type="password" class="form-control" id="new_password" name="new_password" required>
+    </div>
+    <button type="submit" class="btn btn-primary btn-block">Change Password</button>
+</form>
+
+devops-bot@dob-screenplay:~/ui/templates$ cat command_list.html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Command List</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        .command-table {
+            background-color: white;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+        }
+        .command-table th, .command-table td {
+            vertical-align: middle;
+        }
+        .btn-use-command {
+            width: 100%;
+        }
+        .command-description {
+            max-width: 600px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Available Commands</h1>
+        <table class="table table-bordered command-table">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Command</th>
+                    <th>Description</th>
+                    <th>Usage</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Command Rows -->
+                <tr>
+                    <td>AWS Create Subnet</td>
+                    <td class="command-description">Create a subnet within an existing VPC.</td>
+                    <td><code>dob aws-subnet --region &lt;region&gt; --vpc-id &lt;vpc-id&gt; --cidr-block &lt;cidr-block&gt; --availability-zone &lt;availability-zone&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob aws-subnet --region <region> --vpc-id <vpc-id> --cidr-block <cidr-block> --availability-zone <availability-zone>')">Use</button></td>
+                </tr>
+                <tr>
+                    <td>Create Target Group</td>
+                    <td class="command-description">Create a target group for a load balancer.</td>
+                    <td><code>dob create-target-group --region &lt;region&gt; --name &lt;name&gt; --vpc-id &lt;vpc-id&gt; --protocol &lt;protocol&gt; --port &lt;port&gt; --target-type &lt;target-type&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob create-target-group --region <region> --name <name> --vpc-id <vpc-id> --protocol <protocol> --port <port> --target-type <target-type>')">Use</button></td>
+                </tr>
+                <tr>
+                    <td>AWS Create Listener</td>
+                    <td class="command-description">Create a Listener for a Load Balancer.</td>
+                    <td><code>dob aws-create-listener --region &lt;region&gt; --load-balancer-arn &lt;load-balancer-arn&gt; --protocol &lt;protocol&gt; --port &lt;port&gt; --target-group-arn &lt;target-group-arn&gt; --ssl-certificate-arn &lt;ssl-certificate-arn&gt; --action-type &lt;action-type&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob aws-create-listener --region <region> --load-balancer-arn <load-balancer-arn> --protocol <protocol> --port <port> --target-group-arn <target-group-arn> --ssl-certificate-arn <ssl-certificate-arn> --action-type <action-type>')">Use</button></td>
+                </tr>
+                <tr>
+                    <td>Register Targets</td>
+                    <td class="command-description">Register Targets to a Target Group.</td>
+                    <td><code>dob register-targets --region &lt;region&gt; --target-group-arn &lt;target-group-arn&gt; --targets &lt;target-ids&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob register-targets --region <region> --target-group-arn <target-group-arn> --targets <targets>')">Use</button></td>
+                </tr>
+                <tr>
+                    <td>Create Load Balancer</td>
+                    <td class="command-description">Create a Load Balancer.</td>
+                    <td><code>dob create-load-balancer --region &lt;region&gt; --name &lt;name&gt; --subnets &lt;subnets&gt; --security-groups &lt;security-groups&gt; --scheme &lt;scheme&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob create-load-balancer --region <region> --name <name> --subnets <subnets> --security-groups <security-groups> --scheme <scheme>')">Use</button></td>
+                </tr>
+                <tr>
+                    <td>Create Security Group</td>
+                    <td class="command-description">Create a Security Group.</td>
+                    <td><code>dob create-sg --region &lt;region&gt; --vpc-id &lt;vpc-id&gt; --group-name &lt;group-name&gt; --description &lt;description&gt; --inbound-rules &lt;inbound-rules&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob create-sg --region <region> --vpc-id <vpc-id> --group-name <group-name> --description <description> --inbound-rules <inbound-rules>')">Use</button></td>
+                </tr>
+                <tr>
+                    <td>AWS Internet Gateway</td>
+                    <td class="command-description">Create an Internet Gateway and attach it to a VPC.</td>
+                    <td><code>dob aws-ig --region &lt;region&gt; --vpc-id &lt;vpc-id&gt; --tags &lt;tags&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob aws-ig --region <region> --vpc-id <vpc-id> --tags <tags>')">Use</button></td>
+                </tr>
+                <tr>
+                    <td>Create Elastic IP</td>
+                    <td class="command-description">Create an Elastic IP and optionally associate it with an instance.</td>
+                    <td><code>dob create-elastic-ip --region &lt;region&gt; --domain &lt;domain&gt; --instance-id &lt;instance-id&gt; --tags &lt;tags&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob create-elastic-ip --region <region> --domain <domain> --instance-id <instance-id> --tags <tags>')">Use</button></td>
+                </tr>
+                <tr>
+                    <td>Create Route Table</td>
+                    <td class="command-description">Create a Route Table and add routes to it.</td>
+                    <td><code>dob create-route-table --vpc-id &lt;vpc-id&gt; --region &lt;region&gt; --tags &lt;tags&gt; --routes &lt;routes&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob create-route-table --vpc-id <vpc-id> --region <region> --tags <tags> --routes <routes>')">Use</button></td>
+                </tr>
+                <tr>
+                    <td>Create EKS Cluster</td>
+                    <td class="command-description">Create an EKS cluster.</td>
+                    <td><code>dob create-eks-cluster --cluster-name &lt;cluster-name&gt; --region &lt;region&gt; --version &lt;version&gt; --role-arn &lt;role-arn&gt; --subnets &lt;subnets&gt; --security-group-ids &lt;security-group-ids&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob create-eks-cluster --cluster-name <cluster-name> --region <region> --version <version> --role-arn <role-arn> --subnets <subnets> --security-group-ids <security-group-ids>')">Use</button></td>
+                </tr>
+                <tr>
+                    <td>Create EKS Node Group</td>
+                    <td class="command-description">Create an EKS node group.</td>
+                    <td><code>dob create-eks-nodegroup --cluster-name &lt;cluster-name&gt; --region &lt;region&gt; --nodegroup-name &lt;nodegroup-name&gt; --node-role-arn &lt;node-role-arn&gt; --instance-types &lt;instance-types&gt; --subnets &lt;subnets&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob create-eks-nodegroup --cluster-name <cluster-name> --region <region> --nodegroup-name <nodegroup-name> --node-role-arn <node-role-arn> --instance-types <instance-types> --subnets <subnets>')">Use</button></td>
+                </tr>
+                <tr>
+                    <td>Create S3 Bucket</td>
+                    <td class="command-description">Create an S3 bucket with optional configurations.</td>
+                    <td><code>dob create-s3-bucket --bucket-name &lt;bucket-name&gt; --region &lt;region&gt; --public-access-block --versioning --lifecycle-rules &lt;lifecycle-rules&gt; --logging &lt;logging&gt; --encryption &lt;encryption&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob create-s3-bucket --bucket-name <bucket-name> --region <region> --public-access-block --versioning --lifecycle-rules <lifecycle-rules> --logging <logging> --encryption <encryption>')">Use</button></td>
+                </tr>
+                <tr>
+                    <td>AWS NAT Gateway</td>
+                    <td class="command-description">Create a NAT Gateway in a specific subnet.</td>
+                    <td><code>dob aws-nat-gateway --region &lt;region&gt; --subnet-id &lt;subnet-id&gt; --allocation-id &lt;allocation-id&gt; --tags &lt;tags&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob aws-nat-gateway --region <region> --subnet-id <subnet-id> --allocation-id <allocation-id> --tags <tags>')">Use</button></td>
+                </tr>
+                <tr>
+                    <td>Request SSL Certificate</td>
+                    <td class="command-description">Request an SSL certificate.</td>
+                    <td><code>dob request-ssl-certificate --domain-name &lt;domain-name&gt; --validation-method &lt;validation-method&gt; --subject-alternative-names &lt;subject-alternative-names&gt; --tags &lt;tags&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob request-ssl-certificate --domain-name <domain-name> --validation-method <validation-method> --subject-alternative-names <subject-alternative-names> --tags <tags>')">Use</button></td>
+                </tr>
+                <tr>
+                    <td>Run UI</td>
+                    <td class="command-description">Start the UI for Screenplay.</td>
+                    <td><code>dob run-ui --port &lt;port&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob run-ui --port <port>')">Use</button></td>
+                </tr>
+                <tr>
+                    <td>Generate Token</td>
+                    <td class="command-description">Generate a token for a user.</td>
+                    <td><code>dob generate-token --username &lt;username&gt;</code></td>
+                    <td><button class="btn btn-primary btn-use-command" onclick="fillCommandInput('dob generate-token --username <username>')">Use</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function fillCommandInput(command) {
+            // Use sessionStorage to transfer the command to the main page
+            sessionStorage.setItem('selectedCommand', command);
+            // Redirect to the main page where the command input is located
+            window.location.href = 'index.html'; // Adjust the URL to match your main page
+        }
+    </script>
+</body>
+</html>
