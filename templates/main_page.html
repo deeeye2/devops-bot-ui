@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Page</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Screenplay YAML Executor</h1>
+
+        <!-- Command Input -->
+        <div class="form-group">
+            <label for="command_input">Command Input:</label>
+            <input type="text" id="command_input" class="form-control" placeholder="Enter your command here...">
+        </div>
+
+        <button class="btn btn-primary">Execute</button>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check if there's a selected command stored in sessionStorage
+            const selectedCommand = sessionStorage.getItem('selectedCommand');
+            if (selectedCommand) {
+                // Populate the command input with the selected command
+                document.getElementById('command_input').value = selectedCommand;
+                // Clear the stored command from sessionStorage
+                sessionStorage.removeItem('selectedCommand');
+            }
+        });
+    </script>
+</body>
+</html>
