@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screenplay YAML Executor</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-ui/1.12.1/jquery-ui.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/xterm/css/xterm.css" />
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="#">DevOps-Bot</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ml-auto">
+                <!-- Toolbar Icons in Navbar with Tooltips -->
+                <li class="nav-item">
+                    <button class="btn btn-primary" id="showOutputButton" data-toggle="tooltip" data-placement="bottom" title="Output Dashboard: Displays command and screenplay execution output">
+                        <i class="fas fa-terminal"></i> <!-- Terminal Icon -->
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="btn btn-primary" id="showYamlButton" data-toggle="tooltip" data-placement="bottom" title="Screenplay: Create and execute a screenplay">
+                        <i class="fas fa-file-code"></i> <!-- File Icon -->
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="btn btn-primary" id="showCommandListButton" data-toggle="tooltip" data-placement="bottom" title="Command List: View available 'dob' commands">
+                        <i class="fas fa-list"></i> <!-- List Icon -->
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="btn btn-primary" id="showCommandInputButton" data-toggle="tooltip" data-placement="bottom" title="Command Input: Enter and execute commands manually">
+                        <i class="fas fa-keyboard"></i> <!-- Keyboard Icon -->
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="btn btn-primary" id="showMetricsButton" data-toggle="tooltip" data-placement="bottom" title="System Metrics: View system information such as CPU and memory usage">
+                        <i class="fas fa-chart-bar"></i> <!-- Chart Icon -->
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="btn btn-primary" id="goToGeneratorButton" data-toggle="tooltip" data-placement="bottom" title="File Generator: Generate files like Ansible playbooks, K8s manifests, Dockerfiles, etc.">
+                        <i class="fas fa-cogs"></i> <!-- Cogs Icon -->
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="btn btn-primary" id="showCliButton" data-toggle="tooltip" data-placement="bottom" title="Cli terminal and ssh input.">
+                        <i class="fas fa-network-wired"></i> <!-- SSH Icon -->
+                    </button>
+                </li>
+
+                <!-- User Settings Dropdown -->
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" data-toggle="tooltip" data-placement="bottom" title="User Settings">
+                        <i class="fas fa-user"></i> {{ current_user.id }} <!-- Username displayed here -->
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right" aria-labelledby="userDropdown">
+                        <a class="dropdown-item" href="{{ url_for('settings') }}">Settings</a>
+                        <a class="dropdown-item" href="{{ url_for('change_password') }}">Change Password</a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{{ url_for('logout') }}">Logout</a>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <!-- Command List Panel -->
+        <div id="commandListPanel" class="command-list">
+            <div class="window-controls">
+                <button class="btn btn-secondary" id="closeCommandListButton">x</button>
+            </div>
+            <h3>Commands</h3>
+            <button class="command-button" data-command-template="dob aws-subnet --region <region> --vpc-id <vpc-id> --cidr-block <cidr-block> --availability-zone <availability-zone>">AWS Create Subnet</button>
+            <button class="command-button" data-command-template="dob create-target-group --region <region> --name <name> --vpc-id <vpc-id> --protocol <protocol> --port <port> --target-type <target-type>">Create Target Group</button>
+            <button class="command-button" data-command-template="dob aws-create-listener --region <region> --load-balancer-arn <load-balancer-arn> --protocol <protocol> --port <port> --target-group-arn <target-group-arn> --ssl-certificate-arn <ssl-certificate-arn> --action-type <action-type>">AWS Create Listener</button>
+            <button class="command-button" data-command-template="dob register-targets --region <region> --target-group-arn <target-group-arn> --targets <targets>">Register Targets</button>
+            <button class="command-button" data-command-template="dob create-load-balancer --region <region> --name <name> --subnets <subnets> --security-groups <security-groups> --scheme <scheme>">Create Load Balancer</button>
+            <button class="command-button" data-command-template="dob create-sg --region <region> --vpc-id <vpc-id> --group-name <group-name> --description <description> --inbound-rules <inbound-rules> --tags <tags>">Create Security Group</button>
+            <button class="command-button" data-command-template="dob aws-ig --region <region> --vpc-id <vpc-id> --tags <tags>">Create Internet Gateway</button>
+            <button class="command-button" data-command-template="dob create-elastic-ip --region <region> --domain <domain> --instance-id <instance-id> --tags <tags>">Create Elastic IP</button>
+            <button class="command-button" data-command-template="dob create-route-table --region <region> --vpc-id <vpc-id> --tags <tags> --routes <routes>">Create Route Table</button>
+            <button class="command-button" data-command-template="dob create-eks-cluster --cluster-name <cluster-name> --region <region> --version <version> --role-arn <role-arn> --subnets <subnets> --security-group-ids <security-group-ids> --tags <tags>">Create EKS Cluster</button>
+            <button class="command-button" data-command-template="dob create-eks-nodegroup --cluster-name <cluster-name> --region <region> --nodegroup-name <nodegroup-name> --node-role-arn <node-role-arn> --instance-types <instance-types> --subnets <subnets> --min-size <min-size> --max-size <max-size> --desired-size <desired-size> --tags <tags>">Create EKS Nodegroup</button>
+            <button class="command-button" data-command-template="dob create-s3-bucket --bucket-name <bucket-name> --region <region> --public-access-block --versioning --lifecycle-rules <lifecycle-rules> --logging <logging> --encryption <encryption>">Create S3 Bucket</button>
+            <button class="command-button" data-command-template="dob aws-nat-gateway --region <region> --subnet-id <subnet-id> --allocation-id <allocation-id> --tags <tags>">Create NAT Gateway</button>
+            <button class="command-button" data-command-template="dob request-ssl-certificate --domain-name <domain-name> --validation-method <validation-method> --subject-alternative-names <subject-alternative-names> --tags <tags>">Request SSL Certificate</button>
+        </div>
+
+        <!-- Command Input Panel -->
+        <div id="cliPanel" class="cli-panel">
+            <div class="window-controls">
+                <button class="btn btn-secondary" id="minimizeCliButton">-</button>
+                <button class="btn btn-secondary" id="maximizeCliButton">[]</button>
+                <button class="btn btn-secondary" id="closeCliButton">x</button>
+            </div>
+            <div id="terminal-container"></div>
+        </div>
+        <div id="commandInputPanel" class="command-bar mt-4">
+            <div class="window-controls">
+                <button class="btn btn-secondary" id="minimizeCommandInputButton">-</button>
+                <button class="btn btn-secondary" id="maximizeCommandInputButton">[]</button>
+                <button class="btn btn-secondary" id="closeCommandInputButton">x</button>
+            </div>
+            <div class="input-group">
+                <input type="text" id="command_input" name="command_input" class="form-control" placeholder="Enter your command here..." />
+                <div class="input-group-append">
+                    <button class="btn btn-success" type="button" id="submitCommand">Submit</button>
+                </div>
+            </div>
+        </div>
+        <div id="sshPanel" class="ssh-panel">
+    <div class="window-controls">
+        <button class="btn btn-secondary" id="minimizeSshButton">-</button>
+        <button class="btn btn-secondary" id="maximizeSshButton">[]</button>
+        <button class="btn btn-secondary" id="closeSshButton">x</button>
+    </div>
+    <div class="form-group">
+        <label for="hostname">Hostname (IP Address):</label>
+        <input type="text" id="hostname" class="form-control" placeholder="Enter Hostname or IP" required>
+
+        <label for="username">Username:</label>
+        <input type="text" id="username" class="form-control" placeholder="Enter SSH Username" required>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" class="form-control" placeholder="Enter SSH Password" required>
+
+        <button class="btn btn-primary mt-2" id="connectSSH">Connect</button>
+    </div>
+</div>
+
+        <!-- System Metrics Panel -->
+        <div id="metricsPanel" class="metrics-panel">
+            <div class="window-controls">
+                <button class="btn btn-secondary" id="minimizeMetricsButton">-</button>
+                <button class="btn btn-secondary" id="maximizeMetricsButton">[]</button>
+                <button class="btn btn-secondary" id="closeMetricsButton">x</button>
+            </div>
+            <h3>System Metrics</h3>
+            <div id="cpuDetails" class="metric-details">Total CPUs: --, CPU Usage: --%</div>
+            <canvas id="cpuChart"></canvas>
+            <div id="memoryDetails" class="metric-details">Total Memory: --MB, Memory Usage: --%</div>
+            <canvas id="memoryChart"></canvas>
+            <div id="diskDetails" class="metric-details">Total Disk: --GB, Disk Usage: --%</div>
+            <canvas id="diskChart"></canvas>
+            <div id="cpuUserTime" class="metric-details"></div>
+            <div id="cpuSystemTime" class="metric-details"></div>
+            <div id="cpuIdleTime" class="metric-details"></div>
+            <div id="memoryAvailable" class="metric-details"></div>
+            <div id="memoryUsed" class="metric-details"></div>
+            <div id="swapPercent" class="metric-details"></div>
+            <div id="swapTotal" class="metric-details"></div>
+            <div id="swapUsed" class="metric-details"></div>
+            <div id="diskUsed" class="metric-details"></div>
+            <div id="diskFree" class="metric-details"></div>
+            <div id="networkBytesSent" class="metric-details"></div>
+            <div id="networkBytesReceived" class="metric-details"></div>
+            <div id="networkPacketsSent" class="metric-details"></div>
+            <div id="networkPacketsReceived" class="metric-details"></div>
+            <div id="bootTime" class="metric-details"></div>
+        </div>
+
+        <!-- Execution Output Panel -->
+        <div id="executionOutput" class="execution-output">
+            <div class="window-controls">
+                <button class="btn btn-secondary" id="minimizeButton">-</button>
+                <button class="btn btn-secondary" id="maximizeButton">[]</button>
+                <button class="btn btn-secondary" id="closeButton">x</button>
+                <button class="btn btn-warning" id="clearOutputButton">Clear</button> <!-- Clear Button -->
+            </div>
+            <div id="output-content" class="terminal-output"></div>
+        </div>
+        <div class="main-container">
+    <!-- YAML Panel -->
+    <div id="yamlPanel" class="yaml-panel">
+        <div class="window-controls">
+            <button class="btn btn-secondary" id="minimizeYamlButton">-</button>
+            <button class="btn btn-secondary" id="maximizeYamlButton">[]</button>
+            <button class="btn btn-secondary" id="closeYamlButton">x</button>
+        </div>
+
+
+        <!-- Resource Selection Dropdown -->
+        <div class="form-group">
+            <label for="resourceSelection">Select Resources to Generate:</label>
+            <select id="resourceSelection" name="resourceSelection" multiple class="form-control">
+                <option value="ec2">EC2 Instance</option>
+                <option value="s3">S3 Bucket</option>
+                <option value="load_balancer">Load Balancer</option>
+            </select>
+            <button type="button" id="generateYamlButton" class="btn btn-primary mt-2">Generate YAML</button>
+        </div>
+
+        <form id="screenplay-form" method="POST" action="{{ url_for('execute') }}">
+            <div class="form-group">
+                <label for="access_point">Access Point:</label>
+                <select id="access_point" name="access_point" class="form-control">
+                    <option value="default">Default</option>
+                    <option value="dev">Development</option>
+                    <option value="prod">Production</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="yaml_content">YAML Content:</label>
+                <textarea id="yaml_content" name="yaml_content" class="form-control" rows="20" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="command_parameters">Additional Parameters:</label>
+                <input type="text" id="command_parameters" name="command_parameters" class="form-control" placeholder="Enter additional parameters (e.g., --add-remote, --create-remote)">
+            </div>
+
+            <!-- Execution Button for YAML -->
+            <button type="submit" id="executeButton" class="btn btn-primary btn-block">Execute Screenplay</button>
+
+            <!-- Clear YAML Button -->
+            <button type="button" id="clearYamlButton" class="btn btn-warning btn-block">Clear YAML</button>
+        </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Include jQuery, Popper.js, and Bootstrap JS -->
+<script src="https://unpkg.com/xterm/lib/xterm.js"></script>
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.3/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+$(document).ready(function () {
+    // Initialize xterm.js terminal
+    let term = new Terminal();
+    let commandBuffer = '';  // Buffer to store the user's input
+
+    term.open(document.getElementById('terminal-container'));
+
+    // Make the CLI panel draggable and resizable
+    $("#cliPanel").draggable().resizable().hide();
+
+    // Show the CLI panel when the corresponding button in the toolbar is clicked
+    $('#showCliButton').click(function () {
+        $('#cliPanel').show();
+    });
+
+    // Hide, maximize, and minimize the CLI panel
+    $('#minimizeCliButton').click(function () {
+        $('#cliPanel').hide();
+    });
+
+    $('#maximizeCliButton').click(function () {
+        $('#cliPanel').toggleClass('maximized');
+    });
+
+    $('#closeCliButton').click(function () {
+        $('#cliPanel').hide();
+    });
+     // Initialize the SSH input panel and make it draggable and resizable
+    $("#sshPanel").draggable().resizable().hide();
+
+    // Show the SSH panel when the corresponding button is clicked
+    $('#showCliButton').click(function () {
+        $('#sshPanel').show();
+    });
+
+    // Hide, maximize, and minimize the SSH panel
+    $('#minimizeSshButton').click(function () {
+        $('#sshPanel').hide();
+    });
+
+    $('#maximizeSshButton').click(function () {
+        $('#sshPanel').toggleClass('maximized');
+    });
+
+    $('#closeSshButton').click(function () {
+        $('#sshPanel').hide();
+    });
+
+
+// SSH Connection logic
+document.getElementById('connectSSH').addEventListener('click', function () {
+    const hostname = document.getElementById('hostname').value;
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+
+    if (hostname && username && password) {
+        term.write(`Connected to ${hostname} as ${username}...\r\n`);
+
+        // Handle terminal input after connecting
+        term.onData(function (data) {
+            if (data === '\r') {  // Enter key pressed
+                sendCommandToBackend(commandBuffer.trim(), hostname, username, password);  // Send the full command
+                commandBuffer = '';  // Clear the buffer after sending
+            } else if (data === '\u007F') {  // Handle backspace (ASCII code 127)
+                if (commandBuffer.length > 0) {
+                    commandBuffer = commandBuffer.slice(0, -1);  // Remove last character from buffer
+                    term.write('\b \b');  // Erase from terminal display
+                }
+            } else {
+                commandBuffer += data;  // Append character to buffer
+                term.write(data);  // Display the character in terminal
+            }
+        });
+    } else {
+        alert('Please provide all required SSH details (hostname, username, and password).');
+    }
+});
+
+function sendCommandToBackend(command, hostname, username, password) {
+    fetch('/ssh', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            hostname: hostname,  // User-provided IP address
+            username: username,  // User-provided SSH username
+            password: password,  // User-provided SSH password
+            command: command     // User-typed command
+        })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error("Network response was not ok");
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.output) {
+            term.write('\r\n' + data.output + '\r\n');
+        } else if (data.error) {
+            term.write('\r\nError: ' + data.error + '\r\n');
+        }
+    })
+    .catch(error => {
+        term.write(`\r\nError: ${error.message}\r\n`);
+    });
+}
+
+        // Initialize draggable and resizable for panels
+        $("#executionOutput").draggable().resizable().hide();
+        $("#yamlPanel").draggable().resizable().hide();
+        $("#commandInputPanel").draggable().resizable().hide();
+        $("#metricsPanel").draggable().resizable().hide();
+        $("#commandListPanel").draggable().resizable().hide();
+
+        let metricsInterval;
+        function createCharts() {
+        const ctxCpu = document.getElementById('cpuChart').getContext('2d');
+        cpuChart = new Chart(ctxCpu, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'CPU Usage (%)', data: [], backgroundColor: 'rgba(255, 99, 132, 0.2)', borderColor: 'rgba(255, 99, 132, 1)', borderWidth: 1, fill: true }] },
+            options: { scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+
+        const ctxMemory = document.getElementById('memoryChart').getContext('2d');
+        memoryChart = new Chart(ctxMemory, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Memory Usage (%)', data: [], backgroundColor: 'rgba(54, 162, 235, 0.2)', borderColor: 'rgba(54, 162, 235, 1)', borderWidth: 1, fill: true }] },
+            options: { scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+
+
+
+        const ctxDisk = document.getElementById('diskChart').getContext('2d');
+        diskChart = new Chart(ctxDisk, {
+            type: 'line',
+            data: { labels: [], datasets: [{ label: 'Disk Usage (%)', data: [], backgroundColor: 'rgba(75, 192, 192, 0.2)', borderColor: 'rgba(75, 192, 192, 1)', borderWidth: 1, fill: true }] },
+            options: { scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+    }
+        // Function to fetch and update system metrics
+
+        function updateMetrics() {
+        $.getJSON("{{ url_for('metrics') }}", function(data) {
+            // Update CPU chart
+            cpuChart.data.labels.push('');
+            cpuChart.data.datasets[0].data.push(data.cpu_percent);
+            if (cpuChart.data.datasets[0].data.length > 20) {
+                cpuChart.data.datasets[0].data.shift();
+                cpuChart.data.labels.shift();
+            }
+            cpuChart.update();
+
+            // Update Memory chart
+            memoryChart.data.labels.push('');
+            memoryChart.data.datasets[0].data.push(data.memory_percent);
+            if (memoryChart.data.datasets[0].data.length > 20) {
+                memoryChart.data.datasets[0].data.shift();
+                memoryChart.data.labels.shift();
+            }
+            memoryChart.update();
+
+            // Update Disk chart
+            diskChart.data.labels.push('');
+            diskChart.data.datasets[0].data.push(data.disk_percent);
+            if (diskChart.data.datasets[0].data.length > 20) {
+                diskChart.data.datasets[0].data.shift();
+                diskChart.data.labels.shift();
+            }
+            diskChart.update();
+            $('#cpuDetails').text(`Total CPUs: ${data.cpu_count}, CPU Usage: ${data.cpu_percent}%`);
+            $('#memoryDetails').text(`Total Memory: ${data.memory_total}MB, Memory Usage: ${data.memory_percent}%`);
+            $('#diskDetails').text(`Total Disk: ${data.disk_total}GB, Disk Usage: ${data.disk_percent}%`);
+            // Update static metrics (e.g., progress bars or text)
+            $('#cpuUserTime').text(`CPU User Time: ${data.cpu_user_time.toFixed(2)}s`);
+            $('#cpuSystemTime').text(`CPU System Time: ${data.cpu_system_time.toFixed(2)}s`);
+            $('#cpuIdleTime').text(`CPU Idle Time: ${data.cpu_idle_time.toFixed(2)}s`);
+            $('#memoryUsed').text(`Memory Used: ${data.memory_used} GB`);
+            $('#memoryAvailable').text(`Memory Available: ${data.memory_available} GB`);
+            $('#diskUsed').text(`Disk Used: ${data.disk_used} GB`);
+            $('#diskFree').text(`Disk Free: ${data.disk_free} GB`);
+            $('#networkSent').text(`Network Sent: ${data.network_sent} MB`);
+            $('#networkReceived').text(`Network Received: ${data.network_received} MB`);
+            $('#networkPacketsSent').text(`Network Packets Sent: ${data.network_packets_sent}`);
+            $('#networkPacketsReceived').text(`Network Packets Received: ${data.network_packets_received}`);
+            $('#bootTime').text(`Boot Time: ${data.boot_time}`);
+        });
+    }
+
+
+
+        // Function to start metrics fetching
+        function startMetrics() {
+            if (!metricsInterval) {  // Only start if not already running
+                metricsInterval = setInterval(updateMetrics, 5000);
+            }
+        }
+
+        // Function to stop metrics fetching
+        function stopMetrics() {
+            if (metricsInterval) {  // Only stop if running
+                clearInterval(metricsInterval);
+                metricsInterval = null;
+            }
+        }
+
+        // Show metrics panel and start fetching metrics
+        $('#showMetricsButton').click(function () {
+            $('#metricsPanel').show();
+            startMetrics();
+        });
+
+        // Control buttons for the System Metrics panel
+        $('#minimizeMetricsButton').click(function() {
+            $('#metricsPanel').hide();
+            stopMetrics();  // Stop fetching metrics when minimized
+        });
+
+        $('#maximizeMetricsButton').click(function() {
+            $('#metricsPanel').toggleClass('maximized');
+        });
+
+        $('#closeMetricsButton').click(function() {
+            $('#metricsPanel').hide();
+            stopMetrics();  // Stop fetching metrics when closed
+        });
+
+        // Toolbar buttons to show the panels
+        $('#showOutputButton').click(function () {
+            $('#executionOutput').show();
+        });
+        // Make the execution output panel resizable
+        $('#executionOutput').resizable();
+
+        $('#showYamlButton').click(function () {
+            $('#yamlPanel').show();
+        });
+
+        $('#showCommandInputButton').click(function () {
+            $('#commandInputPanel').show();
+        });
+
+        $('#showCommandListButton').click(function () {
+            $('#commandListPanel').show();
+        });
+
+        // Redirect to the generator page when the button is clicked
+        $('#goToGeneratorButton').click(function () {
+            window.location.href = "{{ url_for('file_generator') }}";
+        });
+
+        // Control buttons for the Command List
+        $('#closeCommandListButton').click(function() {
+            $('#commandListPanel').hide();
+        });
+
+        // Control buttons for the execution output panel
+        $('#minimizeButton').click(function() {
+            $('#executionOutput').hide();
+        });
+
+        $('#maximizeButton').click(function() {
+            $('#executionOutput').toggleClass('maximized');
+        });
+
+        $('#closeButton').click(function() {
+            $('#executionOutput').hide();
+        });
+
+        $('#clearOutputButton').click(function() {
+            $('#output-content').html(''); // Clear the execution output
+        });
+
+        // Control buttons for the YAML panel
+        $('#minimizeYamlButton').click(function() {
+            $('#yamlPanel').hide();
+        });
+
+        $('#maximizeYamlButton').click(function() {
+            $('#yamlPanel').toggleClass('maximized');
+        });
+
+        $('#closeYamlButton').click(function() {
+            $('#yamlPanel').hide();
+        });
+
+        // Control buttons for the Command Input
+        $('#minimizeCommandInputButton').click(function() {
+            $('#commandInputPanel').hide();
+        });
+
+        $('#maximizeCommandInputButton').click(function() {
+            $('#commandInputPanel').toggleClass('maximized');
+        });
+
+        $('#closeCommandInputButton').click(function() {
+            $('#commandInputPanel').hide();
+        });
+
+        // Clear YAML Button Functionality
+        $('#clearYamlButton').click(function () {
+             $('#yaml_content').val(''); // Clear the YAML content
+        });
+
+        // Fill command input on hover and click
+        $('.command-button').hover(function () {
+            const commandTemplate = $(this).data('command-template');
+            $('#command_input').val(commandTemplate); // Show in input on hover
+        });
+
+        $('.command-button').click(function () {
+            const commandTemplate = $(this).data('command-template');
+            $('#command_input').val(commandTemplate); // Fill input on click
+        });
+
+        // Trigger command submission when the Enter key is pressed
+        $('#command_input').keypress(function (e) {
+            if (e.which === 13) {  // 13 is the Enter key
+                $('#submitCommand').click(); // Trigger the submit button click event
+                e.preventDefault(); // Prevent the default form submission
+            }
+        });
+
+
+
+
+        // Set up the charts
+        var ctxCpu = document.getElementById('cpuChart').getContext('2d');
+        var cpuChart = new Chart(ctxCpu, {
+            type: 'line',
+            data: {
+                labels: Array(20).fill(''),
+                datasets: [{
+                    label: 'CPU Usage (%)',
+                    data: [],
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1,
+                    fill: true,
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        grid: {
+                            display: true,
+                        },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            display: true,
+                        },
+                    }
+                }
+            }
+        });
+
+        var ctxMemory = document.getElementById('memoryChart').getContext('2d');
+        var memoryChart = new Chart(ctxMemory, {
+            type: 'line',
+            data: {
+                labels: Array(20).fill(''),
+                datasets: [{
+                    label: 'Memory Usage (%)',
+                    data: [],
+                    backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1,
+                    fill: true,
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        grid: {
+                            display: true,
+                        },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            display: true,
+                        },
+                    }
+                }
+            }
+        });
+
+        var ctxDisk = document.getElementById('diskChart').getContext('2d');
+        var diskChart = new Chart(ctxDisk, {
+            type: 'line',
+            data: {
+                labels: Array(20).fill(''),
+                datasets: [{
+                    label: 'Disk Usage (%)',
+                    data: [],
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1,
+                    fill: true,
+                }]
+            },
+            options: {
+                scales: {
+                    x: {
+                        grid: {
+                            display: true,
+                        },
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            display: true,
+                        },
+                    }
+                }
+            }
+        });
+
+        document.getElementById('generateYamlButton').addEventListener('click', function() {
+        const selectedResources = Array.from(document.getElementById('resourceSelection').selectedOptions).map(option => option.value);
+        let generatedYaml = '';
+
+        // EC2 Template
+        const ec2Template = `
+resources:
+  ec2_instances:
+    - instance_type: t2.micro
+      ami_id: ami-0ae8f15ae66fe8cda
+      key_name: jenkins_key
+      security_group: sg-04ac7dc75e1f54b3a
+      # subnet_id: subnet-0aa22b515a2928495
+      # iam_instance_profile: devops-bot
+      # block_device_mappings:
+      #   - DeviceName: /dev/sdh
+      #     Ebs:
+      #       VolumeSize: 10
+      # monitoring: true
+      # instance_initiated_shutdown_behavior: terminate
+      count: 1
+      create_remote: true
+`;
+
+        // S3 Template
+        const s3Template = `
+resources:
+  s3_buckets:
+    - bucket_name: my-s3-bucket
+      region: us-east-1
+      # public_access_block: true
+      # versioning: true
+      # lifecycle_rules:
+      #   - id: my-rule
+      #     status: Enabled
+      #     prefix: logs/
+      #     expiration_in_days: 365
+      # encryption: AES256
+`;
+
+        // Load Balancer Template
+        const loadBalancerTemplate = `
+resources:
+  load_balancers:
+    - name: my-load-balancer
+      type: application
+      subnets:
+        - subnet-0aa22b515a2928495
+        - subnet-0bb33c44ddee9988f
+      security_groups:
+        - sg-04ac7dc75e1f54b3a
+      scheme: internet-facing
+      # tags:
+      #   - Key: Name
+      #     Value: my-load-balancer
+`;
+
+// Listen for input from the terminal
+term.onData(function (data) {
+    sendCommandToBackend(data);  // Send data to backend for execution
+});
+
+        // Append YAML templates based on selected resources
+        if (selectedResources.includes('ec2')) {
+            generatedYaml += ec2Template + '\n';
+        }
+        if (selectedResources.includes('s3')) {
+            generatedYaml += s3Template + '\n';
+        }
+        if (selectedResources.includes('load_balancer')) {
+            generatedYaml += loadBalancerTemplate + '\n';
+        }
+
+        // Set the generated YAML in the textarea
+        document.getElementById('yaml_content').value = generatedYaml.trim();
+    });
+
+    // Clear YAML Button functionality
+    document.getElementById('clearYamlButton').addEventListener('click', function() {
+        document.getElementById('yaml_content').value = '';  // Clear the YAML content
+    });
+
+        // Clear YAML Button Functionality
+        $('#clearYamlButton').click(function () {
+            $('#yaml_content').val(''); // Clear the YAML content
+        });
+
+        // Form submission handling for YAML execution
+        $('#screenplay-form').on('submit', function (e) {
+            e.preventDefault(); // Prevent default form submission
+
+            $('#output-content').html(""); // Clear previous output
+
+            var form = $(this);
+            var formData = form.serialize();
+
+            $.ajax({
+                url: form.attr('action'),
+                method: form.attr('method'),
+                data: formData,
+                xhrFields: {
+                    onprogress: function(e) {
+                        var newResponse = e.currentTarget.response;
+                        $('#output-content').html(newResponse);
+                        $('#output-content').scrollTop($('#output-content')[0].scrollHeight); // Scroll to the bottom
+                    }
+                },
+                success: function() {
+                    $('#executeButton').removeClass('btn-primary').addClass('btn-success').text('Executed'); // Change button color and text
+                    setTimeout(function() {
+                        $('#executeButton').removeClass('btn-success').addClass('btn-primary').text('Execute Screenplay'); // Revert after 10 seconds
+                    }, 10000);
+                },
+                error: function() {
+                   alert('An error occurred during execution.');
+                }
+            });
+        });
+
+        let commandClicked = false;  // Flag to track if a command has been clicked
+
+        // Handle hover to display the command in the input field
+        $('.command-button').hover(function () {
+            if (!commandClicked) {  // Only show command if not clicked
+                const commandTemplate = $(this).data('command-template');
+                $('#command_input').val(commandTemplate); // Show in input on hover
+            }
+        }, function () {
+            if (!commandClicked) {  // Only clear the input if a command hasn't been clicked
+                $('#command_input').val(''); // Clear the input field on hover out
+            }
+        });
+
+        // Handle click to set the command in the input field for editing
+        $('.command-button').click(function () {
+            const commandTemplate = $(this).data('command-template');
+            $('#command_input').val(commandTemplate);  // Set the command in the input field
+            commandClicked = true;  // Set the flag to true to prevent clearing on hover out
+        });
+        // Handle terminal resize
+        window.addEventListener('resize', function () {
+            term.fit();  // Ensure the terminal resizes properly with the window
+        });
+
+        // Submit the command when the button is clicked
+        $('#submitCommand').click(function () {
+            const command = $('#command_input').val().trim();
+            if (command) {
+                if (command.toLowerCase() === 'clear') {
+                    $('#output-content').html(""); // Clear previous output
+                } else {
+                    $.ajax({
+                        url: "{{ url_for('execute_command') }}", // Replace with the correct endpoint
+                        method: 'POST',
+                        data: { command_input: command },
+                        success: function (data) {
+                            $('#output-content').append(`<div>${data}</div>`); // Append new output to the history
+                            $('#output-content').scrollTop($('#output-content')[0].scrollHeight); // Scroll to the bottom
+
+                        },
+                        error: function () {
+                            $('#output-content').append('<div class="text-danger">Command execution failed.</div>');
+                        }
+                    });
+                }
+                $('#command_input').val(''); // Clear the command input field even on error
+                commandClicked = false;  // Reset the flag after execution
+            }
+        });
+    });
+</script>
+</body>
+</html>
