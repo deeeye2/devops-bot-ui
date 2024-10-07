@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screenplay Execution Status</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">Screenplay Execution Status</h1>
+        <div id="status-log" class="mt-4"></div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="{{ url_for('static', filename='js/socket.io.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            var socket = io.connect(location.protocol + '//' + document.domain + ':' + location.port);
+            socket.on('update', function(data) {
+                var statusLog = $('#status-log');
+                var newStatus = $('<div>').text(data.status);
+
+                if (data.error) {
+                    newStatus.addClass('text-danger');
+                } else {
+                    newStatus.addClass('text-success');
+                }
+
+                statusLog.append(newStatus);
+                statusLog.scrollTop(statusLog.prop("scrollHeight"));
+            });
+        });
+    </script>
+</body>
+</html>
