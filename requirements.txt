@@ -6,3 +6,4 @@ psutil==5.9.0
 paramiko==2.11.0
 click==8.0.4
 itsdangerous==2.0.1
+Werkzeug==2.0.3
